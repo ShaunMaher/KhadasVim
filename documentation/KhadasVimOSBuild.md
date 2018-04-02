@@ -1,8 +1,4 @@
-## Speedup
-The Linux sources are going to take some time to download from github.com.  Jump
-ahead to the "Build Kernel" section below and get the "git clone" started in
-another tab/window/terminal so it will be ready by the time you need it.
-
+# Building an OS for the Khadas Vim (and possibly other Arm64 SBCs)
 ## References:
 http://forum.khadas.com/t/port-linux-mainline-on-khadas-vim/848
 
@@ -15,6 +11,11 @@ slow storage slows down everything.
 mkdir KhadasVim
 cd KhadasVim
 ```
+
+## Tip: Speedup
+The Linux sources are going to take some time to download from github.com.  Jump
+ahead to the "Build Kernel" section below and get the "git clone" started in
+another tab/window/terminal so it will be ready by the time you need it.
 
 ## Install the cross-compiling tool chain
 ```
@@ -46,22 +47,6 @@ git clone https://github.com/khadas/u-boot -b ubuntu
 make kvim_defconfig
 make -j8 CROSS_COMPILE=aarch64-linux-gnu-
 ```
-
-## Install u-boot onto eMMC:
-1.  Copy the u-boot.bin* files into the small boot partition on either the SD
-    card or eMMC
-2.  Restart/reset the device with the SD card inserted and start pressing space
-    repeatedly until you get the u-boot prompt.
-3.  Load the u-boot.bin file into memory:
-```
-setenv initrd_loadaddr "0x13000000"
-fatload mmc 0:1 ${initrd_loadaddr} u-boot.bin
-store rom_write ${initrd_loadaddr} 0 100000
-```
-4.  Unplug the SD card and reboot
-      reset
-5.  If all went well it either booted the OS of eMMC or booted to a u-boot
-    prompt
 
 ## Build kernel
 I setup two copies of the kernel source.  One (linux.orig) is completely
@@ -147,17 +132,15 @@ touch .scmversion
 make -j3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg
 ```
 
+Tidy up a little:
+```
+mv ../linux-*_arm64.deb ../linux-*_arm64.changes \
+  ../linux-${KERNELVERSION}*.tar.gz ../linux-${KERNELVERSION}*.dsc ../packages/
+```
+
 ## Future Experiment: Build kernel with ZFS built in
 http://www.linuxquestions.org/questions/linux-fromeson-gxl-s905x-khadas-vimm-scratch-13/%5Bhow-to%5D-add-zfs-to-the-linux-kernel-4175514510/
 
-## Install the device tree (.dtb file) to emmc
-```
-setenv initrd_loadaddr "0x13000000"
-fatload mmc 0:1 ${initrd_loadaddr} kvim.dtb
-fatload mmc 0:1 ${initrd_loadaddr} meson-gxl-s905x-khadas-vim.dtb
-store dtb write ${initrd_loadaddr}
-reset
-```
 ## Initrd: Using Device Emulation
 If you already have a running device, the simplist way to produce the boot image
 and initrd is to use said device.  Alternativly, you can emulate an arm64 device
@@ -228,48 +211,14 @@ resolve this issue, I'm using the ramdisk method.
 ../../utils/mkbootimg --kernel Image --ramdisk initrd.img-4.15.0 -o boot.img
 ```
 
-## Install the boot.img to eMMC
-* Copy the boot.img file to an SD card that is formatted with fat32
-* Connect with the serial adaptor to the Vim
-* Powerup the Vim and immediately press CRTL+C to interupt the boot sequence
-```
-sdc_update ramdisk boot.img
-reset
-```
+## Testing
+This step is not mandatory but if you find yourself making multiple attempts to
+get everything just right you might find that moving your SD card between build
+machine and Vim gets tedious.  You can setup a TFTP server on your network and
+test each kernel as you build it without using the SD card.
 
-## Install the Root filesystem
-* DD the rootfs into a partition on an SD card and boot the Vim with the card
-inserted.  It should find the partition labled ROOTFS on the SD card and use it
-as a root fs.  From here you can DD a rootfs image into the eMMC.
+[TestingViaTFTP.md](TestingViaTFTP.md) 
 
-```
-dd if=rootfs.PARTITION | ssh -t ubuntu@172.30.1.242 sudo dd of=/dev/rootfs
-```
-
-## Install kernel headers
-**Note:** If you uninstalled any of the build tools and you use the zfs DKMS
-module, reinstall the following:
-```
-sudo apt install build-essential libtool autoconf
-```
-
-**Note:** No shortcuts.  Install the debs one at a time in the following order.
-```
-sudo dpkg -i linux-headers-blah
-cd /usr/src/linux-headers-4.9.26-blah
-sudo tar -xzf linux-headers-extra.tar.gz
-sudo make modules_prepare
-sudo dpkg -i linux-image-blah
-```
-
-If all went well then this should have built the DKMS modules for your new
-kernel so when you do boot with it later, zfs will be ready and working for you.
-
-## update-initramfs always fails with an error referring to flash-kernel
-```
-sudo vim /etc/initramfs/post-update.d/flash-kernel
-```
-Add the following line near the top of the script, after the #!
-```
-exit 0
-```
+## Installation
+Head over to the [InstallOntoVim.md](InstallOntoVim.md) document for information
+regarding the installation of your newly built OS.
