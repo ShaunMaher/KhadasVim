@@ -15,4 +15,24 @@ http://packages.debian.org for Arm64, extracting the bash executable and putting
 it in /bin inside the chroot.
 
 ## When running "make modules_prepare": "scripts/kconfig/conf: Command not found"
-I don't know.  I haven't worked this one out yet.
+I don't know.  I haven't worked this one out yet.  It only seems to happen with
+the Khadas kernel fork version 4.9.
+
+## Boot loop after installing Device Tree
+**Don't Panic!**
+I cannot get any .dtb I created from the mainline kernel to not result in a
+u-boot loop.  I keep goping back top the one created from the Khadas 4.9 kernel.
+
+To break the loop you need to short a couple of pins on the Vim board.
+Unfortunately these pins are not accessable while the Vim is in it's case.  Undo
+the four brass nuts on the bottom of the unit, being careful to keep the screws
+in their holes (makes reassembly easier), and remove the bottom acrilic layer.
+At this point I put the brass nuts back onto the screws to stop the screws
+falling out.
+
+Look for a column of small components near but perpendicular to the (bottom of
+the) GPIO pins.  One is marked with an "M".
+
+With the device in it's loop, bridge the two contacts of "M" with a small
+screwdriver or similar tool.  The loop will be broken and the Vim will boot to
+a u-boot prompt.
