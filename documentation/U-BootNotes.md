@@ -34,7 +34,7 @@ setenv mesontimer "0"
 setenv nographics "0"
 
 setenv condev "console=ttyS0,115200n8 console=tty0 consoleblank=0"
-setenv condev "console=ttyAML0,115200n8 console=tty0 consoleblank=0"
+setenv condev "console=ttyAML0,115200n8 consoleblank=0"
 setenv condev "console=ttyAML0,115200n8 console=tty0 console=ttyS0,115200n8 consoleblank=0"
 
 setenv verbosity "255"
