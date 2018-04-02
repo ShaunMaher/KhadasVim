@@ -110,6 +110,8 @@ For the mainline sources (assuming you want to build v4.15):
 git clone https://github.com/torvalds/linux.git .
 git checkout tags/v4.15
 ```
+
+Now create the working copy
 ```
 cd ..
 mkdir linux
@@ -121,21 +123,21 @@ TODO: Um... What patches?
 ```
 
 Set some environment variables to make things easier later
-For the Khadas kernel:
+* For the Khadas kernel:
 ```
 DEFCONFIG="kvim_defconfig"
 DTBRELPATH=""
 DTB="kvim_linux"
 ```
 
-For the mainline kernel with Khadas patches:
+* For the mainline kernel with Khadas patches:
 ```
 DEFCONFIG="kvim_defconfig"
 DTBRELPATH="amlogic/"
 DTB="meson-gxl-s905x-khadas-vim"
 ```
 
-For the mainline kernel without patches:
+* For the mainline kernel without patches:
 ```
 DEFCONFIG="defconfig"
 DTBRELPATH="amlogic/"
@@ -165,7 +167,7 @@ make -j3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
   INSTALL_MOD_PATH=/tmp/kvim7/ modules_install
 ```
 
-Now build run the build again, this time outputting some .debs
+Now build run the build again, this time outputting some .debs<br/>
 TODO: Can we just add deb-pkg to the first build command?  It seems not.  Hmmm.
 ```
 make clean
@@ -234,7 +236,7 @@ Make the initramfs and kernel (uImage) files:
 ```
 update-initramfs -k ${KERNELVERSION} -c
 mkimage -A arm64 -O linux -T ramdisk -a 0x0 -e 0x0 -n \
-  initrd-${KERNELVERSION}.img -d initrd.img-${KERNELVERSION} \
+  initrd.img-${KERNELVERSION} -d initrd.img-${KERNELVERSION} \
   uInitrd-${KERNELVERSION}
 mkimage -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -n \
   ${KERNELVERSION} -d /boot/vmlinuz-${KERNELVERSION} \
