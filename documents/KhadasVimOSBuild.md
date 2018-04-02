@@ -103,10 +103,8 @@ Optional: Apply my patches:
 ```
 TODO: Um... What patches?
 ```
-```
-cd linux
-touch .scmversion
-```
+
+Set some environment variables to maek things easier later
 For the Khadas kernel:
 ```
 DEFCONFIG="kvim_defconfig"
@@ -130,10 +128,12 @@ For either kernel:
 make ARCH=arm64 ${DEFCONFIG}
 touch .scmversion
 make -j3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image ${DTB}.dtb modules
-tar -czf ../linux-headers-extra.tar.gz arch/arm64/kernel/vdso/* \
-  security/selinux/include/* tools/include/tools/*
-cp arch/arm64/boot/dts/amlogic/${DTB}.dtb ../tmp/mkbootimg
-cp arch/arm64/boot/Image ../tmp/mkbootimg
+KERNELVERSION=$(make kernelversion)
+tar -czf ../packages/linux-headers-extra-${KERNELVERSION}.tar.gz \
+  arch/arm64/kernel/vdso/* security/selinux/include/* tools/include/tools/*
+cp arch/arm64/boot/dts/amlogic/${DTB}.dtb \
+  ../tmp/mkbootimg/${DTB}-${KERNELVERSION}.dtb
+cp arch/arm64/boot/Image ../tmp/mkbootimg/Image-${KERNELVERSION}
 ```
 What does this next step achieve?  We never go and fetch these files
 ```
@@ -163,65 +163,7 @@ If you already have a running device, the simplist way to produce the boot image
 and initrd is to use said device.  Alternativly, you can emulate an arm64 device
 on your build machine.
 
-Install the Qemu binaries:
-```
-sudo apt-get install qemu qemu-user-static binfmt-support debootstrap
-```
-
-Create a root filesystem:
-```
-cd roots
-mkdir ubuntu-base-18.04
-cd ubuntu-base-18.04
-tar -xzf /path/to/bionic-base-arm64.tar.gz
-```
-
-Set an environment variable to to the path of the root to save time later:
-```
-ROOTFSPATH=/home/shaun/Documents/KhadasVim/roots/ubuntu-base-18.04
-```
-
-Copy in the Qemu emulator binary
-```
-sudo cp -a /usr/bin/qemu-aarch64-static "${ROOTFSPATH}/usr/bin"
-```
-
-Mount some loactions on your build machine into the root:
-```
-sudo mount -o bind /proc "${ROOTFSPATH}/proc"
-sudo mount -o bind /sys "${ROOTFSPATH}/sys"
-sudo mount -o bind /dev "${ROOTFSPATH}/dev"
-sudo mount -o bimake -j3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image ${DTB}.dtb modules
-nd /dev/pts "${ROOTFSPATH}/dev/pts"
-```
-
-Start a shell inside the root (bash has a bug that should be resolved shortly):
-```
-sudo chroot "${ROOTFSPATH}"
-uname -a
-```
-```
-Linux e6540 4.15.0-13-generic #14-Ubuntu SMP Sat Mar 17 13:44:27 UTC 2018 aarch64 aarch64 aarch64 GNU/Linux
-```
-Note the 'aarch64' near the end.
-
-Configure a nameserver:
-```
-echo "nameserver 8.8.8.8" >>/etc/resolv.conf
-```
-
-Update all packages:
-```
-apt update
-apt -y dist-upgrade
-```
-
-Install some prerequsite packages for networking, editing and creating
-initramfs:
-```
-apt-get install ifupdown net-tools udev vim sudo ssh initramfs-tools dialog \
-  build-essential libssl-dev
-```
+[Setup an Arm64 Chroot on an X86 build machine (Ubuntu/Debian)](SetupArm64ChrootOnX86_64.md)
 
 Install kernel and headers
 ```
