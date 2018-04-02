@@ -10,6 +10,15 @@ netmask (e.g. 255.255.255.0).  As far as I know, u-boot (or at least the Khadas
 fork of u-boot) does not support DHCP.  If your TFTP server is in another
 subnet, you need to know your gateway's IP.
 
+## ROOTFS
+You can follow the following steps without having a ROOTFS for the kernel to
+mount and init from but you'll obviously reach a point where the kernel stops.
+
+By default, the kernel is passed command line options from u-boot and the u-boot
+we build tells the kernel for mount any filesystem it can find that has the
+label "ROOTFS".  This means that you could have such a partition on an SD card,
+USB drive or on the eMMC itself.
+
 ## Install U-Boot
 I didn't try installing u-boot itself via TFTP.  I just installed it [the old
 fashioned way](InstallOntoVim.md).

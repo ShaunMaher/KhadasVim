@@ -10,8 +10,10 @@ fatload mmc 0:1 ${initrd_loadaddr} u-boot.bin
 store rom_write ${initrd_loadaddr} 0 100000
 ```
 4.  Unplug the SD card and reboot
-      reset
-5.  If all went well it either booted the OS of eMMC or booted to a u-boot
+```
+reset
+```
+5.  If all went well it either booted the OS on eMMC or booted to a u-boot
     prompt
 
 ## Install the device tree (.dtb file) to emmc
@@ -32,7 +34,19 @@ sdc_update ramdisk boot.img
 reset
 ```
 
-## Install the Root filesystem
+## Use a Root filesystem hosted on an NFS server
+TODO
+
+## Install a Root filesystem from a DD image on your TFTP server
+https://www.reddit.com/r/commandline/comments/5psivn/piping_tftp_to_dd/
+
+```
+tftp -g -l - -r <filename> <ipaddr> | sudo dd of=/dev/rootfs
+```
+
+TODO
+
+## Install a Root filesystem from a DD image on your build machine, over SSH
 * DD the rootfs into a partition on an SD card and boot the Vim with the card
 inserted.  It should find the partition labled ROOTFS on the SD card and use it
 as a root fs.  From here you can DD a rootfs image into the eMMC.

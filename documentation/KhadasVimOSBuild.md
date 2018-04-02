@@ -227,6 +227,21 @@ resolve this issue, I'm using the ramdisk method.
   initrd.img-${KERNELVERSION} -o boot-${KERNELVERSION}.img
 ```
 
+## Make a ROOTFS using an Ubuntu "base"
+This provides the slimmest root filesytem that is completely vanilla.  No bells,
+no whistles.  You do get a little more freedom with being able to follow
+Ubuntu's release schedule rather than waiting for Khadas to release their
+version.  You also get to support yourself if Khadas stop providing up-top-date
+images.
+
+TODO
+
+## Use an existing ROOTFS: Provided by Khadas
+The Khadas images have a few extra goodies, such as making the Vim's red LED
+"breathe" and "pulse" depending on system load, etc.
+
+TODO
+
 ## Testing
 This step is not mandatory but if you find yourself making multiple attempts to
 get everything just right, you might find that moving your SD card between build
