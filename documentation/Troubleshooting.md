@@ -19,7 +19,7 @@ I don't know.  I haven't worked this one out yet.  It only seems to happen with
 the Khadas kernel fork version 4.9.
 
 ## Boot loop after installing Device Tree
-**Don't Panic!**
+**Don't Panic!**<br/>
 I cannot get any .dtb I created from the mainline kernel to not result in a
 u-boot loop.  I keep goping back top the one created from the Khadas 4.9 kernel.
 
