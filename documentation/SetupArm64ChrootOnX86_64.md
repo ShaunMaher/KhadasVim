@@ -15,7 +15,7 @@ tar -xzf /path/to/bionic-base-arm64.tar.gz
 
 Set an environment variable to to the path of the root to save time later:
 ```
-ROOTFSPATH=/home/shaun/Documents/KhadasVim/roots/ubuntu-base-18.04
+ROOTFSPATH=$(pwd)/roots/ubuntu-base-18.04
 ```
 
 Copy in the Qemu emulator binary
@@ -28,8 +28,7 @@ Mount some loactions on your build machine into the root:
 sudo mount -o bind /proc "${ROOTFSPATH}/proc"
 sudo mount -o bind /sys "${ROOTFSPATH}/sys"
 sudo mount -o bind /dev "${ROOTFSPATH}/dev"
-sudo mount -o bimake -j3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image ${DTB}.dtb modules
-nd /dev/pts "${ROOTFSPATH}/dev/pts"
+sudo mount -o bind /dev/pts "${ROOTFSPATH}/dev/pts"
 ```
 
 Start a shell inside the root (bash has a bug that should be resolved shortly):

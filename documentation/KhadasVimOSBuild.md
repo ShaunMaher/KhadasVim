@@ -18,16 +18,20 @@ ahead to the "Build Kernel" section below and get the "git clone" started in
 another tab/window/terminal so it will be ready by the time you need it.
 
 ## Install the cross-compiling tool chain
+**Note**: I used the 5.x toolchain initially but found that none of the kernels
+I built actaully booted.  There were no errors during the build process.  Maybe
+I was still doing something wrong.  I did try with the latest toolchain (7.x at
+the time of writing) but the build failed.
 ```
 mkdir toolchains
 cd toolchains
 ```
-Browse to https://releases.linaro.org/components/toolchain/binaries/latest-5/aarch64-linux-gnu/
+Browse to https://releases.linaro.org/components/toolchain/binaries/latest-4/aarch64-linux-gnu/
 and get the URL for the latest package for the 5.x branch (latest supported
 version)
 ```
 wget <URL>
-tar -xJf gcc-linaro-5.*.tar.xz
+tar -xJf gcc-linaro-4.*.tar.xz
 PATH=$PATH:TODO
 ```
 
@@ -148,11 +152,24 @@ on your build machine.
 
 [Setup an Arm64 Chroot on an X86 build machine (Ubuntu/Debian)](SetupArm64ChrootOnX86_64.md)
 
+Copy some of the generated packages and files into the chroot
+```
+cp packages/linux-image-${KERNELVERSION}*.deb \
+  packages/linux-headers-${KERNELVERSION}*.deb \
+  packages/linux-headers-extra-${KERNELVERSION}*.tar.gz "${ROOTFSPATH}/tmp/"
+```
+
+Launch the chroot (with a trick so that the KERNELVERSION environment variable
+follows us into the chroot)
+```
+sudo chroot "${ROOTFSPATH}" bash -c "KERNELVERSION=${KERNELVERSION} bash"
+```
+
 Install kernel and headers
 ```
-dpkg -i /tmp/linux-headers-*.deb
-cd /usr/src/linux-headers-*
-tar -xzf /tmp/linux-headers-extra.tar.gz
+dpkg -i /tmp/linux-headers*.deb
+cd /usr/src/linux-headers-${KERNELVERSION}
+tar -xzf /tmp/linux-headers-extra-${KERNELVERSION}.tar.gz
 make modules_prepare
 dpkg -i /tmp/linux-image-*.deb
 ```
@@ -177,7 +194,7 @@ dpkg -i /tmp/linux-image-*.deb
 
 Make the initramfs:
 ```
-sudo update-initramfs -k 4.15.0 -c
+update-initramfs -k ${KERNELVERSION} -c
 ```
 
 We're done inside the chroot for now:
@@ -187,9 +204,7 @@ exit
 
 Move to the top level of your build environment and then:
 ```
-cd tmp/mkbootimg
-cp "${ROOTFSPATH}/boot/initrd.img-4.15.0" .
-../../utils/mkbootimg --kernel Image --ramdisk initrd.img-4.15.0 -o boot.img
+cp "${ROOTFSPATH}/boot/initrd.img-${KERNELVERSION}" tmp/mkbootimg/
 ```
 
 ## Initrd: Using the device itself
@@ -208,16 +223,24 @@ possible but I can't get u-boot to read the ext4 file system right now.  Intil I
 resolve this issue, I'm using the ramdisk method.
 
 ```
-../../utils/mkbootimg --kernel Image --ramdisk initrd.img-4.15.0 -o boot.img
+../../utils/mkbootimg --kernel Image-${KERNELVERSION} --ramdisk \
+  initrd.img-${KERNELVERSION} -o boot-${KERNELVERSION}.img
 ```
 
 ## Testing
 This step is not mandatory but if you find yourself making multiple attempts to
-get everything just right you might find that moving your SD card between build
+get everything just right, you might find that moving your SD card between build
 machine and Vim gets tedious.  You can setup a TFTP server on your network and
 test each kernel as you build it without using the SD card.
 
-[TestingViaTFTP.md](TestingViaTFTP.md) 
+[TestingViaTFTP.md](TestingViaTFTP.md)
+
+I would be SCPing the resulting files onto my TFTP server like this:
+```
+TFTPSERVER=172.30.0.1
+scp tmp/mkbootimg/boot-${KERNELVERSION}.img root@$TFTPSERVER:/tftpboot/
+scp tmp/mkbootimg/${DTB}-${KERNELVERSION}.dtb root@$TFTPSERVER:/tftpboot/
+```
 
 ## Installation
 Head over to the [InstallOntoVim.md](InstallOntoVim.md) document for information
