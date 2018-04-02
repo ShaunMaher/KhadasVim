@@ -1,0 +1,12 @@
+/linux
+/linux.orig
+/linux-4.12
+/linux.khadas
+/Archive
+/disk_images/*
+/toolchains/gcc-linaro*
+/tmp/mkbootimg/*
+/u-boot
+/utils
+/roots
+/packages
