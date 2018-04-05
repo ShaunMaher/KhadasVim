@@ -40,6 +40,8 @@ TODO
 ## Install a Root filesystem from a DD image on your TFTP server
 https://www.reddit.com/r/commandline/comments/5psivn/piping_tftp_to_dd/
 
+This requires a running Linux OS though.  Can we do something similar from
+within u-boot itself?
 ```
 tftp -g -l - -r <filename> <ipaddr> | sudo dd of=/dev/rootfs
 ```

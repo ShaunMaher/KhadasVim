@@ -5,6 +5,7 @@ server on your preferred OS.  I use pfSense as my home router OS.  I simply
 installed the TFTP package from it's Package Manager GUI.
 
 ## Before you begin
+**Reference**: https://www.emcraft.com/som/using-dhcp<br/>
 There are two ways to setup u-boot's network stack.  First is manually
 specifying network parameters (IP, netmask, gateway, TFTP server) or using DHCP.
 
@@ -24,11 +25,7 @@ we build tells the kernel for mount any filesystem it can find that has the
 label "ROOTFS".  This means that you could have such a partition on an SD card,
 USB drive or on the eMMC itself.
 
-## Install U-Boot
-I didn't try installing u-boot itself via TFTP.  I just installed it [the old
-fashioned way](InstallOntoVim.md).
-
-## Initial Network Setup
+## Manual Network Setup
 If you are not using DHCP, you need to give u-boot the network information you
 gathered earlier.  For my network this looks like:
 ```
@@ -51,14 +48,41 @@ I'm also going to setup a kernel version variable to save typing:
 setenv kver 4.9.40
 ```
 
+I'm going to create another environment variable that will be set to either
+"dhcp" or "tftp".  This way all the following commands can be the same
+regardless of you're using DHCP or a manual network setup.
+For DHCP
+```
+setenv tftpcmd "dhcp"
+```
+
+For TFTP with manual network settings:
+```
+setenv tftpcmd "tftp"
+```
+
 Save these settings so you don't need to enter them for every boot:
 ```
 saveenv
 ```
 
+## Install U-Boot
+```
+${tftpcmd} ${initrd_loadaddr} u-boot.bin
+store rom_write ${initrd_loadaddr} 0 100000
+reset
+```
+After the device restarts:
+```
+defenv
+saveenv
+```
+Repeat the "Initial Network Setup" and "Initial Setup" steps above as your saved
+environment variables have been lost.
+
 ## Download and install the Device Tree
 ```
-tftp ${dtb_mem_addr} kvim_linux-${kver}.dtb
+${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb
 fdt addr ${dtb_mem_addr}
 store dtb write ${dtb_mem_addr}
 reset
@@ -66,7 +90,7 @@ reset
 
 ## Download and launch a Boot Image
 ```
-tftp ${kernel_loadaddr} boot-${kver}.img
+${tftpcmd} ${kernel_loadaddr} boot-${kver}.img
 bootm
 ```
 
@@ -80,8 +104,13 @@ This method has the advantage of not needing the mkbootimg tool on your build
 machine.  Having a dependence on an x86 machine in order to get your Arm machine
 running is silly.
 ```
-tftp ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr}
-tftp ${kernel_loadaddr} uImage-${kver}
-tftp ${initrd_loadaddr} uInitrd-4.9.40
+${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr}
+${tftpcmd} ${kernel_loadaddr} uImage-${kver}
+${tftpcmd} ${initrd_loadaddr} uInitrd-4.9.40
 bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
+```
+
+The above merged into a single line:
+```
+${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr};${tftpcmd} ${kernel_loadaddr} uImage-${kver};${tftpcmd} ${initrd_loadaddr} uInitrd-4.9.40;bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 ```
