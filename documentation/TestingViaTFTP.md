@@ -112,5 +112,9 @@ bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 
 The above merged into a single line:
 ```
-${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr};${tftpcmd} ${kernel_loadaddr} uImage-${kver};${tftpcmd} ${initrd_loadaddr} uInitrd-4.9.40;bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
+setenv serverip 172.30.0.2; setenv kver 4.14.11; setenv tftpcmd "dhcp";setenv kernel_loadaddr "0x11000000"; setenv initrd_loadaddr "0x13000000"
+
+
+
+${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr};${tftpcmd} ${kernel_loadaddr} uImage-${kver};${tftpcmd} ${initrd_loadaddr} uInitrd-${kver};bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 ```

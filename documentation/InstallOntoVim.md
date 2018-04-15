@@ -43,7 +43,16 @@ https://www.reddit.com/r/commandline/comments/5psivn/piping_tftp_to_dd/
 This requires a running Linux OS though.  Can we do something similar from
 within u-boot itself?
 ```
-tftp -g -l - -r <filename> <ipaddr> | sudo dd of=/dev/rootfs
+curl tftp://172.30.0.2/ubuntu-minimal_18.04-1G_ROOTFS.img | \
+  sudo dd of=/dev/rootfs
+```
+This method is a bit slow.  40 minutes over 100Mbit/s LAN for a 1GiB image.  
+Should also use something like "| tee >(md5sum)" to validate the image that was
+downloaded.
+```
+curl tftp://172.30.0.2/ubuntu-minimal_18.04-1G_ROOTFS.img |\
+  tee >(md5sum) | \
+  sudo dd of=/dev/rootfs
 ```
 
 TODO
