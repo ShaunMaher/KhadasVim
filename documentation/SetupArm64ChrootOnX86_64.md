@@ -56,5 +56,5 @@ Install some prerequsite packages for networking, editing and creating
 initramfs:
 ```
 apt-get install ifupdown net-tools udev vim sudo ssh initramfs-tools dialog \
-  build-essential libssl-dev u-boot-tools
+  build-essential libssl-dev u-boot-tools bison flex
 ```

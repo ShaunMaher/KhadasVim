@@ -66,6 +66,47 @@ Save these settings so you don't need to enter them for every boot:
 saveenv
 ```
 
+## Test u-boot without installing
+You can chainload U-Boot, which is to say, you can use the already installed
+u-boot to load and execute your new u-boot to give it a trial run without
+changing the u-boot stored on the MMC.
+
+To do this, you need to know where in memory U-Boot expects to find itself.  In
+the root of your U-Boot build tree there should be a file called simply
+"u-boot".  This is the u-boot executable before it's stripped and wrapped up.
+```
+objdump -f u-boot
+```
+
+From the following output we can see that the u-boot for the Vim seems to expect
+to be at 0x1000000
+```
+u-boot.elf:     file format elf64-little
+architecture: UNKNOWN!, flags 0x00000112:
+EXEC_P, HAS_SYMS, D_PAGED
+start address 0x0000000001000000
+```
+
+Copy the u-boot.bin from the u-boot build root directory (not the one in the fip
+directory) to your TFTP server.  Boot the Vim to a u-boot prompt (repeatedly tap
+space while it's going through the very first stages of boot) and try the
+following:
+```
+${tftpcmd} 0x1000000 u-boot.bin
+go 0x1000000
+```
+
+You should see the U-Boot startup text flash by:
+```
+kvim#go 0x1000000
+## Starting application at 0x01000000 ...
+
+
+U-Boot 2018.01-rc3 (Apr 30 2018 - 19:41:50 +1000) khadas-vim
+```
+
+If, instead, the system seems to have rebooted itself, something went wrong.
+
 ## Install U-Boot
 ```
 ${tftpcmd} ${initrd_loadaddr} u-boot.bin
@@ -106,7 +147,7 @@ running is silly.
 ```
 ${tftpcmd} ${dtb_mem_addr} kvim_linux-${kver}.dtb; fdt addr ${dtb_mem_addr}
 ${tftpcmd} ${kernel_loadaddr} uImage-${kver}
-${tftpcmd} ${initrd_loadaddr} uInitrd-4.9.40
+${tftpcmd} ${initrd_loadaddr} uInitrd-${kver}
 bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 ```
 

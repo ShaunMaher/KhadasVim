@@ -108,6 +108,11 @@ If you're going to try to pull the root filesystem image from a TFTP server
 apt install curl
 ```
 
+Create a /etc/fstab
+```
+TODO
+```
+
 Setup timezone and locale (replace "en_AU.UTF-8" with your desired locale):
 ```
 dpkg-reconfigure tzdata

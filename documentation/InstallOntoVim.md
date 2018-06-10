@@ -9,6 +9,12 @@ setenv initrd_loadaddr "0x13000000"
 fatload mmc 0:1 ${initrd_loadaddr} u-boot.bin
 store rom_write ${initrd_loadaddr} 0 100000
 ```
+
+Maybe instead
+```
+mmc write ${initrd_loadaddr} <unknown address> ${filesize}
+```
+
 4.  Unplug the SD card and reboot
 ```
 reset
@@ -16,7 +22,7 @@ reset
 5.  If all went well it either booted the OS on eMMC or booted to a u-boot
     prompt
 
-## Install the device tree (.dtb file) to emmc
+## Install the device tree (.dtb file) to emmc - Only
 ```
 setenv initrd_loadaddr "0x13000000"
 fatload mmc 0:1 ${initrd_loadaddr} kvim.dtb
@@ -25,26 +31,27 @@ store dtb write ${initrd_loadaddr}
 reset
 ```
 
-## Install the boot.img to eMMC
-* Copy the boot.img file to an SD card that is formatted with fat32
-* Connect with the serial adaptor to the Vim
-* Powerup the Vim and immediately press CRTL+C to interupt the boot sequence
+## Use U-Boot to create some basic GPT partitions on eMMC
+As you can see below, I leave a 64MiB gap at the beginning of the eMMC.  This is
+to make sure we don't overlap with U-Boot and it's environment.  We could
+tighten this up with math and testing some other time.
 ```
-sdc_update ramdisk boot.img
-reset
+partitions="uuid_disk=0fa9206e-6bcc-11e8-9392-c3cf9b293922;name=BOOT,start=64MiB,size=100MiB,uuid=ae178b6a-6bcb-11e8-a042-63bcdf179117;name=ROOTFS,size=3900MiB,uuid=a4b19cee-6bd2-11e8-b662-1b9914e11155"
+gpt write mmc 2 ${partitions}
 ```
 
-## Use a Root filesystem hosted on an NFS server
+## Install a root filesystem
+### Use a Root filesystem hosted on an NFS server
 TODO
 
-## Install a Root filesystem from a DD image on your TFTP server
+### Install a Root filesystem from a DD image on your TFTP server
 https://www.reddit.com/r/commandline/comments/5psivn/piping_tftp_to_dd/
 
 This requires a running Linux OS though.  Can we do something similar from
 within u-boot itself?
 ```
 curl tftp://172.30.0.2/ubuntu-minimal_18.04-1G_ROOTFS.img | \
-  sudo dd of=/dev/rootfs
+  sudo dd of=/dev/disk/by-partlabel/ROOTFS
 ```
 This method is a bit slow.  40 minutes over 100Mbit/s LAN for a 1GiB image.  
 Should also use something like "| tee >(md5sum)" to validate the image that was
@@ -52,12 +59,24 @@ downloaded.
 ```
 curl tftp://172.30.0.2/ubuntu-minimal_18.04-1G_ROOTFS.img |\
   tee >(md5sum) | \
-  sudo dd of=/dev/rootfs
+  sudo dd of=/dev/disk/by-partlabel/ROOTFS
 ```
 
-TODO
+Expand the filesytem you just wrote so that it fills the entire partition
+```
+sudo resize2fs /dev/disk/by-partlabel/ROOTFS
+```
 
-## Install a Root filesystem from a DD image on your build machine, over SSH
+Get your FIT image (kernel, initramfs and DTB) from the TFTP server:
+```
+mkdir /mnt/boot
+mount /dev/disk/by-partlabel/BOOT /mnt/boot
+cd /mnt/boot
+sudo curl tftp://172.30.0.2/image-4.16.13.itb --output image-4.16.13.itb
+ln -s image-4.16.13.itb image.itb
+```
+
+### Install a Root filesystem from a DD image on your build machine, over SSH
 * DD the rootfs into a partition on an SD card and boot the Vim with the card
 inserted.  It should find the partition labled ROOTFS on the SD card and use it
 as a root fs.  From here you can DD a rootfs image into the eMMC.
@@ -84,3 +103,24 @@ sudo dpkg -i linux-image-blah
 
 If all went well then this should have built the DKMS modules for your new
 kernel so when you do boot with it later, zfs will be ready and working for you.
+
+## Final U-Boot configuration
+To make U-Boot load the FIT image from the BOOT partition and then boot it
+automatically, boot into the U-Boot prompt and:
+```
+setenv bootcmd "ext4load mmc 2:1 ${kernel_loadaddr} image.itb; bootm ${kernel_loadaddr}"
+saveenv
+reset
+```
+If all went well, you will now boot into Linux automatically without
+interaction.
+
+## Extra kernel command line arguments
+As mentioned elsewhere, the "gpt" argument forces the kernel to read the
+secondary GPT header if the primary is corrupt (i.e. slightly overwritten by
+U-Boot).
+
+I also use LXD/LXC containers and snaps so I need AppArmor so I add
+"apparmor=1 security=apparmor"
+
+My complete bootargs looks like this: TODO
