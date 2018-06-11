@@ -1,12 +1,16 @@
 /linux
 /linux.orig
 /linux-4.12
+/linux-4.16.13
 /linux.khadas
 /Archive
 /disk_images/*
 /toolchains/gcc-linaro*
 /tmp/mkbootimg/*
 /u-boot
+/u-boot.mainline
+/u-boot.khadas
+/fenix
 /utils
 /roots
 /packages
