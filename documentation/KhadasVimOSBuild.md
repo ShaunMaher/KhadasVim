@@ -4,20 +4,20 @@
   * https://github.com/umiddelb/armhf/wiki/How-To-compile-a-custom-Linux-kernel-for-your-ARM-device
 
 ## Caveats
-### Missing u-boot command limits ability to update u-boot in the future
+#### Missing u-boot command limits ability to update u-boot in the future
 The mainline u-boot doesn't have a "store rom_write" command so I'm not sure
 how to have an a mainline U-Boot install U-Boot to eMMC.  For now I'm going
 to keep a Khadas U-Boot handy so it can be put onto a SD card, chain booted
 and then used to write U-Boot to eMMC.  I'm fairly sure that "write mmc ..."
 can do the job but I'm not sure where on the eMMC U-Boot should be written.
 
-### Cannot manipulate U-Boot environment from within Linux
+#### Cannot manipulate U-Boot environment from within Linux
 I put the environment in an arbitrary location near the start of the eMMC and I
 don't know how to configure u-boot-tools to this location, yet.
 
 https://github.com/lentinj/u-boot/blob/master/tools/env/fw_env.config
 
-### MTD Partitions
+#### MTD Partitions
 I didn't end up utilising the MTD partitioning that the Khadas U-Boot and
 Kernel use.  I just couldn't get the mainline U-Boot to recognise any
 partitions.
@@ -29,7 +29,7 @@ the storage.  One starting at LBA 1 and one starting at the last LBA (LBA
 -1).  If you provide the additional Linux kernel argument "gpt" it will
 search for and find the valid secondary GPT and make use of it.
 
-### Khadas forked kernel is quite stable
+#### Khadas forked kernel is quite stable
 I have been using the Khadas fork of the 4.9 kernel for several months with
 no issues.  I have modified my Vim by adding a 25x25x15mm heatsink on the
 CPU which required cutting a square hole in the top of the case for the
@@ -93,12 +93,8 @@ wget https://releases.linaro.org/components/toolchain/binaries/7.2-2017.11/aarch
 
 ```
 
-## Khadas utils
-```
-git clone https://github.com/khadas/utils.git
-```
-
-## Build u-boot (Khadas fork)
+## Build U-Boot
+#### Khadas fork
 **Note:** Don't try to do this on the Vim.  It makes use of a x86_64 binary.
 
 ```
@@ -110,12 +106,16 @@ make kvim_defconfig
 make -j8 CROSS_COMPILE=aarch64-linux-gnu-
 ```
 
-## Build u-boot (mainline)
-**Note**: This u-boot build seems unable to persistantly store environment
-variables and cannot boot the v4.9 kernel that does boot with the Khadas u-boot
-fork "FDT and ATAGS support not compiled in - hanging".  Maybe not ready for the
-prime time yet.  It will, with the configuration modifications below, boot a FIT
-image with the latest kernel.
+#### Mainline
+**Notes**:
+1.  As mentioned earlier, I have been unable to get this U-Boot to see MDT
+partitions (even when they were manually added to the DTB).
+2.  I'm also unable to get this U-Boot to boot the boot.img style files that I
+used with the Khadas provided U-Boot.  I'll be using FIT images so this poses no issue.
+3.  The method I used to store the environment on eMMC is a bit blunt and could
+use refinement.
+4.  Again, as mentioned earlier, I cannot get this U-Boot to install U-Boot to
+eMMC properly.
 
 This entire process is basically pulled directly from the Khasas [fenix](https://github.com/khadas/fenix) scripts.
 
@@ -191,7 +191,7 @@ include/configs/khadas-vim.h
         "kernel_loadaddr=0x11000000\0" \
         "initrd_loadaddr=0x13000000\0" \
         "tftpcmd=dhcp\0" \
-        "bootargs=\"root=LABEL=ROOTFS rootflags=data=writeback rw no_console_suspend consoleblank=0 fsck.repair=yes net.ifnames=0 jtag=disable\""
+        "bootargs=\"root=LABEL=ROOTFS rootflags=data=writeback rw no_console_suspend consoleblank=0 fsck.repair=yes net.ifnames=0 jtag=disable gpt\"\0"
 
 #define CONFIG_SYS_MMC_ENV_DEV 2
 #define CONFIG_ENV_OFFSET 0x800000
@@ -228,13 +228,7 @@ fip/aml_encrypt_gxl --bootmk --output fip/u-boot.bin --bl2 fip/bl2.n.bin.sig \
 
 The resulting u-boot images are in fip/u-boot.bin*
 
-## Build kernel
-I setup two copies of the kernel source.  One (linux.orig) is completely
-untouched upstream source the other (linux) gets local modifications and
-patches, etc.  This can be handy for creating patches or just when you have made
-an unfixable mess and want to start over but don't want to wait for the download
-again.
-
+## Build the Linux kernel
 When you're building a kernel from source, the builder assumes that you're doing
 so for debugging purposes and it kindly makes the kernel identify itself by the
 git revision number.  This just makes things difficult when you want to build
@@ -269,12 +263,6 @@ git clone https://github.com/torvalds/linux.git .
 git checkout tags/v4.15
 ```
 
-Now create the working copy
-```
-cd ..
-mkdir linux
-cp -ra linux.orig/* linux/
-```
 Optional: Apply patches:
 ```
 cd linux-4.16.13
@@ -363,7 +351,8 @@ mv ../linux-*_arm64.deb ../linux-*_arm64.changes \
 ## Future Experiment: Build kernel with ZFS built in
 http://www.linuxquestions.org/questions/linux-from-scratch-13/%5Bhow-to%5D-add-zfs-to-the-linux-kernel-4175514510/
 
-## Initrd: Using Device Emulation
+## Initrd
+#### Using Device Emulation
 If you already have a running device, the simplist way to produce the boot image
 and initrd is to use said device.  Alternativly, you can emulate an arm64 device
 on your build machine.
@@ -435,7 +424,7 @@ cp "${ROOTFSPATH}/boot/uImage-${KERNELVERSION}" tmp/mkbootimg/
 cp "${ROOTFSPATH}/boot/uInitrd-${KERNELVERSION}" tmp/mkbootimg/
 ```
 
-## Initrd: Using the device itself
+#### Using the device itself
 I had a running Vim with the stock 4.9.26 kernel running so I installed the .deb
 for the kernel I compiled above and then:
 ```
@@ -443,26 +432,79 @@ sudo update-initramfs -k 4.9.26-g8bc293d -c
 ```
 Then I took the resulting /boot/initrd.img-4.9.26-g8bc293d
 
-## Make the boot.img - Deprecated.  Use the FIT image section below
-I'm in two minds as to what to do here.  The upstream method is to create a
-boot.img that gets written to it's own "ramdisk" partition on the emmc.  The
-downside with the "ramdisk partition" approach is that it's more difficult for
-the installed OS to manage it's own kernel updates.
-
-I would prefer an old school kernel and initrd in a /boot directory.  The latter
-is possible but I can't get u-boot to read the ext4 file system right now.
-Until I resolve this issue, I'm using the ramdisk method.
-
-```
-cd tmp/mkbootimg
-../../utils/mkbootimg --kernel Image-${KERNELVERSION} --ramdisk \
-  initrd.img-${KERNELVERSION} -o boot-${KERNELVERSION}.img
-```
-
 ## Make a FIT image
-Work in progress
+A FIT image is a single file that contains Kernel, initramfs and DTB.  You start
+with these three components as seperate files plus a .its file and then use
+`mkimage` to create the final .itb file.
 
-TODO: Compression to speed up boot/save space on /boot volume
+The .its file (which I simply call image-${KERNELVERSION}.its) looks like this:
+```
+/dts-v1/;
+
+/ {
+    description = "U-Boot fitImage for plnx_aarch64 kernel";
+    #address-cells = <1>;
+
+    images {
+        kernel@0 {
+            description = "Linux Kernel";
+            data = /incbin/("./Image-4.16.13");
+            type = "kernel";
+            arch = "arm64";
+            os = "linux";
+            compression = "none";
+            load = <0x80000>;
+            entry = <0x80000>;
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+        fdt@0 {
+            description = "Flattened Device Tree blob";
+            data = /incbin/("./meson-gxl-s905x-khadas-vim-4.16.13.dtb");
+            type = "flat_dt";
+            arch = "arm64";
+            compression = "none";
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+        ramdisk@0 {
+            description = "ramdisk";
+            data = /incbin/("./initrd.cpio-4.16.13");
+            type = "ramdisk";
+            arch = "arm64";
+            os = "linux";
+            compression = "none";
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+    };
+    configurations {
+        default = "conf@1";
+        conf@1 {
+            description = "Boot Linux kernel with FDT blob + ramdisk";
+            kernel = "kernel@0";
+            fdt = "fdt@0";
+            ramdisk = "ramdisk@0";
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+    };
+};
+```
+
+`initrd.cpio-4.16.13` is an uncompressed version of the `initrd.img-4.16.13`
+created earlier.  To get it just:
+```
+cat initrd.img-4.16.13 | gunzip >initrd.cpio-4.16.13
+```
+
+* TODO: Compression to speed up boot/save space on /boot volume
+* TODO: Can we add things like the default "bootargs"?
+
 ```
 mkimage -f image-${KERNELVERSION}.its image-${KERNELVERSION}.itb
 ```
@@ -490,14 +532,8 @@ test each kernel as you build it without using the SD card.
 I would be SCPing the resulting files onto my TFTP server like this:
 ```
 TFTPSERVER=172.30.0.2
-scp tmp/mkbootimg/boot-${KERNELVERSION}.img root@$TFTPSERVER:/tftpboot/
-scp tmp/mkbootimg/uImage-${KERNELVERSION} root@$TFTPSERVER:/tftpboot/
-scp tmp/mkbootimg/uInitrd-${KERNELVERSION} root@$TFTPSERVER:/tftpboot/
-scp tmp/mkbootimg/${DTB}-${KERNELVERSION}.dtb root@$TFTPSERVER:/tftpboot/
+scp tmp/mkbootimg/image-${KERNELVERSION}.itb root@$TFTPSERVER:/tftpboot/
 ```
-
-In actuallity, you want either the boot-\*.img OR the uImage-\* and uInitrd-\*
-files.  I'll be experimenting with both so I'll send both.
 
 ## Installation
 Head over to the [InstallOntoVim.md](InstallOntoVim.md) document for information

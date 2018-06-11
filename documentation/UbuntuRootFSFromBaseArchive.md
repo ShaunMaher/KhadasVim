@@ -1,4 +1,5 @@
 # Ubuntu root filesystem from a "base" archive
+## Initial Build
 This provides the slimmest root filesytem that is completely vanilla.  No bells,
 no whistles.  You do get a little more freedom with being able to follow
 Ubuntu's release schedule rather than waiting for Khadas to release their
@@ -47,6 +48,13 @@ sudo mkfs.fat -F 16 -n BOOT /dev/loop101p1
 sudo mkfs.ext4 -L ROOTFS -m 0 /dev/loop101p2
 ```
 
+TODO: f2fs might be a better choice for the ROOTFS as it balances writes amongst
+blocks to optimise block lifespan.  This not so much an issue on SSD storage
+where the SSDs controller balances the writes but controllerless devices such as
+eMMC and SD Cards don't have these algorithms built in.  That said, I'm going to
+use ZFS on the data volume which will probably thrash the device to death in
+short order.
+
 Mount the root filesystem partition
 ```
 sudo mkdir /mnt/target
@@ -60,9 +68,8 @@ sudo tar -xzf ~/Downloads/bionic-base-arm64.tar.gz
 ```
 
 **Note**: The "base" archive doesn't seem to contain any type of init making it
-useless without adding at least systemd?  I just installed "ubuntu-server" and
-got a system that booted.  TODO: Work out some minimum packages to get an init
-or suggest "init=/bin/bash" on the kernel command line for first boot.
+useless without adding at least systemd?  I just installed "ubuntu-minimal" and
+"systemd" and got a system that booted.
 
 Optional: Chroot into our root file system and make customisations<br/>
 Use the process detailed on the [Setup an Arm64 Chroot on an X86 build machine (Ubuntu/Debian)](SetupArm64ChrootOnX86_64.md)
@@ -71,17 +78,12 @@ page.
 I would install, at minimum:
 ```
 apt --no-install-recommends --no-install-suggests install ifupdown net-tools \
-  udev sudo ssh dialog openssh-server
-```
-
-You still won't have an init system so maybe add "systemd"
-```
-TODO
+  udev sudo ssh dialog openssh-server ubuntu-minimal systemd
 ```
 
 If you're not super worried about making your image as small as possible you
-could just install "ubuntu-minimal" or, for a little more stuff you might not
-need strictly need "ubuntu-server"
+could just install "ubuntu-server", even if you end up with a little more stuff
+you might not need strictly need.
 
 I'm slowly moving towards having NetworkManager manage network connections for
 me rather than needing to mess about with configurations manually.
@@ -151,54 +153,3 @@ TODO
 
 ### Generate unique SSH host keys
 TODO
-
-### Install kernel packages and create boot images
-
-### U-Boot load kernel and initrd from root filesystem
-**Note**: My version of u-boot clearly has ext4 issues so I'm not using the
-below until I work out an updated u-boot.
-```
-ext4load mmc 1:5 ${dtb_mem_addr} kvim_linux-${kver}.dtb;fdt addr ${dtb_mem_addr}
-ext4load mmc 1:5 ${kernel_loadaddr} uImage-${kver}
-ext4load mmc 1:5 ${initrd_loadaddr} uInitrd-4.9.40
-bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
-```
-
-### U-Boot load kernel and initrd from seperate filesystem
-Since the above isn't working as I'd like, I'm going to try creating a fat32
-filesystem in the partition that's supposed to be for the boot ramdisk image and
-drop the needed files in there.
-
-We will need to keep in mind that when we update our kernel, etc. we need to
-update the files in this partition.
-```
-sudo mkfs.fat -F 16 -n RAMDISK /dev/ramdisk
-sudo mkdir /boot/ramdisk
-sudo mount /dev/ramdisk /boot/ramdisk
-sudo cp /boot/uImage-4.9.40 /boot/uInitrd-4.9.40 /boot/kvim_linux-4.9.40.dtb \
-  /boot/ramdisk
-```
-Add the following to /etc/fstab (the "nofail" and "-systemd.device-timeout=1"
-stop the system going into a panic if the filesystem cannot be found or will not
-mount cleanly):
-```
-LABEL=RAMDISK /boot/ramdisk       vfat    ro,umask=0077,nofail,x-systemd.device-timeout=1      0       1
-```
-
-Reboot and from the u-boot prompt:
-```
-fatload mmc 1:4 ${dtb_mem_addr} kvim_linux-${kver}.dtb;fdt addr ${dtb_mem_addr}
-fatload mmc 1:4 ${kernel_loadaddr} uImage-${kver}
-fatload mmc 1:4 ${initrd_loadaddr} uInitrd-${kver}
-bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
-```
-
-If that works, make it persistant as u-boot's default boot command:
-```
-setenv bootcmd "fatload mmc 1:4 ${dtb_mem_addr} kvim_linux-${kver}.dtb;fdt addr ${dtb_mem_addr};fatload mmc 1:4 ${kernel_loadaddr} uImage-${kver};fatload mmc 1:4 ${initrd_loadaddr} uInitrd-${kver};bootm ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}"
-saveenv
-reset
-```
-
-If all goes well the Vim will load the kernel, initrd and dtb from the small
-fat32 partition and boot the OS without any manual steps.

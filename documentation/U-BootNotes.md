@@ -1,4 +1,9 @@
-# Manually boot Kernel, etc from SDCard
+# Useless tidbits
+These are just notes and fragments I scrawled as I was learning how things
+fitted together.  Most is probably useless, or worse, wrong.  Use at yout own
+risk.
+
+## Manually boot Kernel, etc from SDCard
 ```
 setenv cec "cecf"
 setenv mesontimer "0"
@@ -27,7 +32,7 @@ if test "${nographics}" = "1"; then fdt rm /reserved-memory; fdt rm /aocec; fi
 booti ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 ```
 
-# Manually boot kernel from ext4 partition on eMMC
+## Manually boot kernel from ext4 partition on eMMC
 ```
 setenv cec "cecf"
 setenv mesontimer "0"
@@ -63,13 +68,13 @@ if test "${nographics}" = "1"; then fdt rm /reserved-memory; fdt rm /aocec; fi
 booti ${kernel_loadaddr} ${initrd_loadaddr} ${dtb_mem_addr}
 ```
 
-# Save the dtb to eMMC of it gets lost
+## Save the dtb to eMMC of it gets lost
 Use the above steps, up to the "fdt addr..." line, and then
 ```
 store dtb write ${dtb_mem_addr}
 ```
 
-# Manual installation with f2fs on eMMC
+## Manual installation with f2fs on eMMC
 1.  Write the downloaded image to SD card
 2.  Make sure you have serial access to the console port of Vim
 3.  I don't know what happened here but I ended up with uboot installed on eMMC
@@ -148,8 +153,8 @@ autoscr ${s905_autoscript}
 
 I still don't know how to make this run on it's own though.
 
-# Other crap
-## Armbian testing images for Vim:
+## Other crap
+### Armbian testing images for Vim:
 https://yadi.sk/d/pHxaRAs-tZiei/Test
 
 
@@ -169,7 +174,7 @@ setenv bootargs "root=LABEL=ROOTFS rootflags=data=writeback rw console=ttyS0,115
 store read ramdisk ${loadaddr} 800000 2000000
 bootm ${loadaddr}
 
-## Filesystem info
+### Filesystem info
 /dev/mmcblk1p1: UUID="ab1a67e3-e83d-46bf-bfb4-86d61832ec62" TYPE="ext4" PARTUUID="602c2d31-01"
 EMMCROOTFS
 
