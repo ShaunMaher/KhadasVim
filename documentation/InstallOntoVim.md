@@ -9,7 +9,7 @@ Because of our issue where GPT and U-Boot are sharing some space on the eMMC
 your partition sizes set right the first time.  Every time you change them,
 GPT will overwrite U-boot and you'll need to reinstall U-Boot.
 ```
-partitions="uuid_disk=0fa9206e-6bcc-11e8-9392-c3cf9b293922;name=BOOT,start=64MiB,size=100MiB,uuid=ae178b6a-6bcb-11e8-a042-63bcdf179117;name=ROOTFS,size=3900MiB,uuid=a4b19cee-6bd2-11e8-b662-1b9914e11155"
+partitions="uuid_disk=0fa9206e-6bcc-11e8-9392-c3cf9b293922;name=BOOT,start=64MiB,size=100MiB,uuid=ae178b6a-6bcb-11e8-a042-63bcdf179117;name=ROOTFS,size=3900MiB,uuid=a4b19cee-6bd2-11e8-b662-1b9914e11155;name=ZPOOL,size=-,uuid=ebc99d44-71fd-11e8-b490-f72d8dbd6d7e"
 gpt write mmc 2 ${partitions}
 ```
 
@@ -33,7 +33,7 @@ TODO
 ```
   * Then
 ```
-store rom_write ${initrd_loadaddr} 0 100000
+store rom_write ${initrd_loadaddr} 0 ${filesize}
 ```
 
 Maybe instead

@@ -48,12 +48,18 @@ sudo mkfs.fat -F 16 -n BOOT /dev/loop101p1
 sudo mkfs.ext4 -L ROOTFS -m 0 /dev/loop101p2
 ```
 
-TODO: f2fs might be a better choice for the ROOTFS as it balances writes amongst
-blocks to optimise block lifespan.  This not so much an issue on SSD storage
-where the SSDs controller balances the writes but controllerless devices such as
-eMMC and SD Cards don't have these algorithms built in.  That said, I'm going to
-use ZFS on the data volume which will probably thrash the device to death in
-short order.
+TODO: F2FS or JFFS2 may be better choices for the ROOTFS as they balance writes
+amongst blocks to optimise block lifespan.  This is not so much an issue on SSD
+storage where the SSDs controller balances the writes but controllerless devices
+such as eMMC and SD Cards don't have these algorithms built in.  That said, I'm
+going to use ZFS on the data volume which will probably thrash the device to
+death in short order.
+
+Nilfs2 ran out of space before I got the ~300MiB of OS packages installed.  It
+requires a constantly running garbage collector service in order to not run out
+of space but apparently you can't trust the GC to free up space before you run
+out.  Even though is seems like a really interesting concept, I'm disregarding
+Nilfs2 for now.
 
 Mount the root filesystem partition
 ```

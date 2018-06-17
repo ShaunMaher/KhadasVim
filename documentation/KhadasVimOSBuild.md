@@ -168,10 +168,12 @@ I enable:
 * delay in seconds before automatically booting -> 10 (useful while still testing)
 * Display information about the board during early start up
 * Display information about the board during late start up
+* Partition Types -> Enable support of GUID for partition type
 * Command line interface -> Device access commands -> GPT (GUID Partition Table) command
 * Command line interface -> Device access commands -> GPT Random UUID generation
 * Environment -> Environment in an MMC device
 * Command line interface -> Misc commands -> uuid, guid - generation of unique IDs
+* Command line interface -> Shell prompt -> "kvim> "
 
 The following extra configuration was added to the end of (just before the
 `#endif /* __CONFIG_H */`  on the last line of the file):
@@ -308,7 +310,13 @@ make ARCH=arm64 menuconfig
 making changes.
 
 I enabled:
+* File systems -> F2FS filesystem support
+* File systems -> F2FS consistency checking feature
+* File systems -> NILFS2 file system support
 * File systems -> Miscellaneous filesystems -> (SquashFS) Include support for XZ compressed file systems (needed for Ubuntu snaps)
+* File systems -> Miscellaneous filesystems -> (SquashFS) Decompressor parallelisation options (Use multiple decompressors for parallel I/O)
+* File systems -> Miscellaneous filesystems -> Journalling Flash File System v2 (JFFS2) support
+* File systems -> Miscellaneous filesystems -> JFFS2 XATTR support
 * File systems -> Network File Systems ->  NFS server support (as a module and with all it's sub-items)
 * File systems -> Network File Systems ->  Ceph distributed file system (as a module)
 * File systems -> Network File Systems ->  SMB3 and CIFS support (as a module)

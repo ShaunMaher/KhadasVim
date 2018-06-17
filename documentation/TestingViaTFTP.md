@@ -110,7 +110,7 @@ If, instead, the system seems to have rebooted itself, something went wrong.
 ## Install U-Boot
 ```
 ${tftpcmd} ${initrd_loadaddr} u-boot.bin
-store rom_write ${initrd_loadaddr} 0 100000
+store rom_write ${initrd_loadaddr} 0 ${filesize}
 reset
 ```
 After the device restarts:
