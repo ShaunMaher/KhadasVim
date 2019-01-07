@@ -1,8 +1,10 @@
 /linux
+/linux.old
 /linux.orig
 /linux-4.12
 /linux-4.16.13
 /linux.khadas
+/linux-mainline-4.20
 /Archive
 /disk_images/*
 /toolchains/gcc-linaro*

@@ -55,6 +55,9 @@ such as eMMC and SD Cards don't have these algorithms built in.  That said, I'm
 going to use ZFS on the data volume which will probably thrash the device to
 death in short order.
 
+**Note:** If you use F2FS for your ROOTFS, you need to remove the
+"rootflags=data=writeback" from "bootargs" in U-Boot.
+
 Nilfs2 ran out of space before I got the ~300MiB of OS packages installed.  It
 requires a constantly running garbage collector service in order to not run out
 of space but apparently you can't trust the GC to free up space before you run
@@ -129,6 +132,12 @@ locale-gen en_AU.UTF-8
 update-locale --reset LANG=en_AU.UTF-8
 ```
 
+TODO: Wifi firmware from here: https://github.com/khadas/fenix/tree/master/archives/hwpacks/wlan-firmware/brcm
+```
+mkdir -p /lib/firmware/brcm/
+```
+
+
 Unmount the partitions within the image
 ```
 sudo umount $(mount |grep /mnt/target/ | awk '{print $3}')
@@ -155,7 +164,7 @@ TODO
 
 ## First boot
 ### Set hostname
-TODO
+sudo hostnamectl set-hostname "some.host.name"
 
 ### Generate unique SSH host keys
 TODO

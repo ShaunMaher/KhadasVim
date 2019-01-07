@@ -52,7 +52,77 @@ reset
 ### Use a Root filesystem hosted on an NFS server
 TODO
 
-### Install a Root filesystem from a DD image on your TFTP server
+### Install a Root filesystem from a DD image on your TFTP server from within U-Boot (experimental)
+
+Get the ROOTFS image into memory.  Obviously this will only work if the image is smaller than the VIM's total memory.  I stick to 1GiB images so I should be
+OK(?).
+```
+${tftpcmd} ${initrd_loadaddr} ubuntu-minimal_18.04_900M-f2fs-ROOTFS.img
+```
+This seemed faster than the curl download from the same server.
+
+We need to know how many "blocks" the image is.  ${filesize} in bytes.
+```
+mmc dev 2
+mmc info
+```
+```
+Device: mmc@74000
+Manufacturer ID: 15
+OEM: 100
+Name: AWPD3
+Bus Speed: 52000000
+Mode : MMC High Speed (52MHz)
+Rd Block Len: 512
+MMC version 5.0
+High Capacity: Yes
+Capacity: 14.6 GiB
+Bus Width: 8-bit
+Erase Group Size: 512 KiB
+HC WP Group Size: 8 MiB
+User Capacity: 14.6 GiB WRREL
+Boot Capacity: 4 MiB ENH
+RPMB Capacity: 4 MiB ENH
+```
+So, our blocks are 512b.  We need to divide ${filesize} by 512.  To complicate
+things, ${filesize} is in hex and the block size is decimal.  512 = 0x200 so we
+want to do (0x${filesize}/0x200).  I don't know how to do math in the U-Boot
+shell so I'm just going to use Gnome Calculator in Programmer mode.
+
+My ~900MiB image file comes to: 1D0800
+
+Work out where to write it.
+```
+mmc dev 2
+mmc part
+```
+```
+Part    Start LBA       End LBA         Name
+        Attributes
+        Type GUID
+        Partition GUID
+  1     0x00020000      0x00051fff      "BOOT"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        type:   data
+        guid:   ae178b6a-6bcb-11e8-a042-63bcdf179117
+  2     0x00052000      0x007effff      "ROOTFS"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        type:   data
+        guid:   a4b19cee-6bd2-11e8-b662-1b9914e11155
+  3     0x007f0000      0x01d1efde      "ZPOOL"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        type:   data
+        guid:   ebc99d44-71fd-11e8-b490-f72d8dbd6d7e
+```
+So, my rootfs partition starts at "0x00052000"
+```
+mmc write ${initrd_loadaddr} 0x00052000 0x1D0800
+```
+
+### Install a Root filesystem from a DD image on your TFTP server from a running Linux OS
 https://www.reddit.com/r/commandline/comments/5psivn/piping_tftp_to_dd/
 
 This requires a running Linux OS though.  Can we do something similar from

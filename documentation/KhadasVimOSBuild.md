@@ -254,9 +254,9 @@ git apply $(find ../patches/linux/khadas-4.9.40/ -mindepth 1 | sort)
 For the mainline kernel as used/built by the fenix scripts, with Khadas/amlogic
 patches:
 ```
-wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.16.13.tar.xz
-tar --strip-components=1 -xJf linux-4.16.13.tar.xz
-git apply $(find ../patches/linux/mainline-4.16.13/ -mindepth 1 | sort)
+wget http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.20.tar.xz
+tar --strip-components=1 -xJf linux-4.20.tar.xz
+git apply $(find ../patches/linux/mainline-4.20/ -mindepth 1 | sort)
 ```
 
 For the mainline sources (assuming you want to build v4.15):
@@ -312,7 +312,6 @@ making changes.
 I enabled:
 * File systems -> F2FS filesystem support
 * File systems -> F2FS consistency checking feature
-* File systems -> NILFS2 file system support
 * File systems -> Miscellaneous filesystems -> (SquashFS) Include support for XZ compressed file systems (needed for Ubuntu snaps)
 * File systems -> Miscellaneous filesystems -> (SquashFS) Decompressor parallelisation options (Use multiple decompressors for parallel I/O)
 * File systems -> Miscellaneous filesystems -> Journalling Flash File System v2 (JFFS2) support
@@ -456,11 +455,11 @@ The .its file (which I simply call image-${KERNELVERSION}.its) looks like this:
     images {
         kernel@0 {
             description = "Linux Kernel";
-            data = /incbin/("./Image-4.16.13");
+            data = /incbin/("./Image-4.16.13.gz");
             type = "kernel";
             arch = "arm64";
             os = "linux";
-            compression = "none";
+            compression = "gzip";
             load = <0x80000>;
             entry = <0x80000>;
             hash@1 {
@@ -479,11 +478,11 @@ The .its file (which I simply call image-${KERNELVERSION}.its) looks like this:
         };
         ramdisk@0 {
             description = "ramdisk";
-            data = /incbin/("./initrd.cpio-4.16.13");
+            data = /incbin/("./initrd.img-4.16.13");
             type = "ramdisk";
             arch = "arm64";
             os = "linux";
-            compression = "none";
+            compression = "gzip";
             hash@1 {
                 algo = "sha1";
             };
@@ -504,13 +503,11 @@ The .its file (which I simply call image-${KERNELVERSION}.its) looks like this:
 };
 ```
 
-`initrd.cpio-4.16.13` is an uncompressed version of the `initrd.img-4.16.13`
-created earlier.  To get it just:
+To create the gzip compressed file `Image-4.16.13.gz`:
 ```
-cat initrd.img-4.16.13 | gunzip >initrd.cpio-4.16.13
+gzip -k Image-4.16.13
 ```
 
-* TODO: Compression to speed up boot/save space on /boot volume
 * TODO: Can we add things like the default "bootargs"?
 
 ```
