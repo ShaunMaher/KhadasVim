@@ -87,7 +87,12 @@ page.
 I would install, at minimum:
 ```
 apt --no-install-recommends --no-install-suggests install ifupdown net-tools \
-  udev sudo ssh dialog openssh-server ubuntu-minimal systemd
+  udev sudo ssh dialog openssh-server ubuntu-minimal systemd vim.tiny dosfstools isc-dhcp-common
+```
+
+To make vim.tiny work as the default vim:
+```
+update-alternatives --install /usr/bin/vim vim /usr/bin/vim.tiny 100
 ```
 
 If you're not super worried about making your image as small as possible you
@@ -112,6 +117,12 @@ echo ubuntu:ubuntu | chpasswd
 If you plan to use NetworkManager to manage the ethernet connection:
 ```
 rm /usr/lib/NetworkManager/conf.d/10-globally-managed-devices.conf
+```
+
+If you want to drop in a basic NetPlan coonfiguration:
+```
+echo -e "network:\n  version: 2\n  renderer: networkd\n  ethernets:\n    eth0:\n      dhcp4: true" >/etc/netplan/defaul
+t.yaml
 ```
 
 If you're going to try to pull the root filesystem image from a TFTP server

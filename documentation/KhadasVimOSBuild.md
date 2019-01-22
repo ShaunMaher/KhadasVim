@@ -293,7 +293,7 @@ DTB="meson-gxl-s905x-khadas-vim"
 * For the mainline kernel without patches:
 ```
 if [ "${ORIGPATH}" == "" ]; then export ORIGPATH=$PATH; fi
-PATH=TODO
+PATH=$(pwd)/../toolchains/gcc-linaro-6.3.1-2017.02-x86_64_aarch64-linux-gnu/bin:$ORIGPATH
 DEFCONFIG="defconfig"
 DTBRELPATH="amlogic/"
 DTB="meson-gxl-s905x-khadas-vim"

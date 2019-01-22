@@ -9,7 +9,7 @@ Because of our issue where GPT and U-Boot are sharing some space on the eMMC
 your partition sizes set right the first time.  Every time you change them,
 GPT will overwrite U-boot and you'll need to reinstall U-Boot.
 ```
-partitions="uuid_disk=0fa9206e-6bcc-11e8-9392-c3cf9b293922;name=BOOT,start=64MiB,size=100MiB,uuid=ae178b6a-6bcb-11e8-a042-63bcdf179117;name=ROOTFS,size=3900MiB,uuid=a4b19cee-6bd2-11e8-b662-1b9914e11155;name=ZPOOL,size=-,uuid=ebc99d44-71fd-11e8-b490-f72d8dbd6d7e"
+partitions="uuid_disk=0fa9206e-6bcc-11e8-9392-c3cf9b293922;name=ROOTFS,start=64MiB,size=4000MiB,uuid=a4b19cee-6bd2-11e8-b662-1b9914e11155;name=ZPOOL,size=-,uuid=ebc99d44-71fd-11e8-b490-f72d8dbd6d7e"
 gpt write mmc 2 ${partitions}
 ```
 
@@ -47,6 +47,12 @@ reset
 ```
 5.  If all went well it either booted the OS on eMMC or booted to a u-boot
     prompt
+
+## Set a persistant MAC address for the NIC
+```
+setenv ethaddr <generate a unique mac address and put it here>
+saveenv
+```
 
 ## Install a root filesystem
 ### Use a Root filesystem hosted on an NFS server
@@ -167,7 +173,7 @@ dd if=rootfs.PARTITION | ssh -t ubuntu@172.30.1.242 sudo dd of=/dev/rootfs
 **Note:** If you uninstalled any of the build tools and you use the zfs DKMS
 module, reinstall the following:
 ```
-sudo apt install build-essential libtool autoconf
+sudo apt install build-essential libtool autoconf bison flex libssl-dev
 ```
 
 **Note:** No shortcuts.  Install the debs one at a time in the following order.

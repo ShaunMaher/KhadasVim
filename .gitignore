@@ -16,3 +16,5 @@
 /utils
 /roots
 /packages
+/u-boot*
+/tmp
