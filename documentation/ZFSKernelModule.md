@@ -49,6 +49,7 @@ dkms build -m zfs -v ${ZFSVERSION} -k ${KERNELVERSION}
 ```
 
 ## Package the module
+Reference: https://vincent.bernat.ch/en/blog/2018-packaging-driver-debian-dkms
 ```
 dkms mkbmdeb -m zfs -v ${ZFSVERSION} -k ${KERNELVERSION}
 ```
