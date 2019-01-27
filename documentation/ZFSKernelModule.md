@@ -19,6 +19,12 @@ TODO
 ### Required packages
 ```
 apt install python3-distutils dh-autoreconf tzdata
+```
+
+### Avoid DKMS automatically attempting to build all modules when you install a new kernel
+```
+rm  /etc/kernel/postinst.d/dkms
+```
 
 ### Kernel and Headers
 You need to install the kernel and headers for the kernel you will be building modules for
@@ -39,7 +45,7 @@ cd ..
 
 ## Build the module
 ```
-dkms build -m ${ZFSVERSION} -v 0.8.0 -k ${KERNELVERSION}
+dkms build -m zfs -v ${ZFSVERSION} -k ${KERNELVERSION}
 ```
 
 ## Package the module
@@ -48,6 +54,48 @@ dkms mkbmdeb -m zfs -v ${ZFSVERSION} -k ${KERNELVERSION}
 ```
 
 ## Install the module on the target machine
+
+### Installation issue
+```
+dpkg: dependency problems prevent configuration of zfs-modules-4.20.3:
+ zfs-modules-4.20.3 depends on linux-image-4.20.3; however:
+  Package linux-image-4.20.3 is not installed.
+
+dpkg: error processing package zfs-modules-4.20.3 (--install):
+ dependency problems - leaving unconfigured
+Errors were encountered while processing:
+ zfs-modules-4.20.3
+```
+At some point recently the Linux kernel package went from being named
+linux-image-<version> to just linux-image.  Either DKMS or ZFS needs to update
+how they do dependencies.  In the mean time:
+```
+mkdir linux-image-4.20.3
+cd linux-image-4.20.3
+dpkg-deb -R . /path/to/linux-image_4.20.3-2_arm64.deb
+vim DEBIAN/control
+```
+Change:
+```
+Package: linux-image
+```
+to
+```
+Package: linux-image-4.20.3
+```
+
+And create a new .deb:
+```
+dpkg-deb -b . ../linux-image_4.20.3-2_arm64_fixed.deb
+```
+
+Uninstall the old package and install the new one:
+```
+sudo dpkg -r linux-image
+sudo dpkg -i ../linux-image_4.20.3-2_arm64_fixed.deb
+```
+
+Now try installing the ZFS modules .deb again.
 
 ## Keeping up to date
 The biggest issue with this process is that there is no automatic way have all of this happen each time there is a kernel update.  Can we come up with something?

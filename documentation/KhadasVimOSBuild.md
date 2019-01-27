@@ -254,9 +254,19 @@ git apply $(find ../patches/linux/khadas-4.9.40/ -mindepth 1 | sort)
 For the mainline kernel as used/built by the fenix scripts, with Khadas/amlogic
 patches:
 ```
-wget http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.20.tar.xz
-tar --strip-components=1 -xJf linux-4.20.tar.xz
-git apply $(find ../patches/linux/mainline-4.20/ -mindepth 1 | sort)
+wget http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.20.3.tar.xz
+tar --strip-components=1 -xJf linux-4.20.3.tar.xz
+git apply -v $(find ../patches/linux/mainline-4.20.3/ -mindepth 1 | sort)
+```
+***Possible issue:*** The `git apply` command may return a few warnings but if
+it only returns a lot of `Skipped patch` messages, it might be because you are
+working inside a git working tree.  You can either move your linux kernel source
+directory elsewhere, apply the patches and move it back or use the `patch`
+command instead.
+
+To use the `patch` command instead:
+```
+cat $(find ../patches/linux/mainline-4.20.3/ -mindepth 1 | sort) | patch -p 1
 ```
 
 For the mainline sources (assuming you want to build v4.15):

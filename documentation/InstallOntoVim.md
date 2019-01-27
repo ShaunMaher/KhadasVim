@@ -95,7 +95,7 @@ things, ${filesize} is in hex and the block size is decimal.  512 = 0x200 so we
 want to do (0x${filesize}/0x200).  I don't know how to do math in the U-Boot
 shell so I'm just going to use Gnome Calculator in Programmer mode.
 
-My ~900MiB image file comes to: 1D0800
+My ~500MiB image file comes to: 0xF9800
 
 Work out where to write it.
 ```
@@ -103,29 +103,29 @@ mmc dev 2
 mmc part
 ```
 ```
+Partition Map for MMC device 2  --   Partition Type: EFI
+
+GUID Partition Table Header signature is wrong: 0x6791EB71709C9E05 != 0x5452415020494645
+part_print_efi: *** ERROR: Invalid GPT ***
+part_print_efi: ***        Using Backup GPT ***
 Part    Start LBA       End LBA         Name
         Attributes
         Type GUID
         Partition GUID
-  1     0x00020000      0x00051fff      "BOOT"
-        attrs:  0x0000000000000000
-        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
-        type:   data
-        guid:   ae178b6a-6bcb-11e8-a042-63bcdf179117
-  2     0x00052000      0x007effff      "ROOTFS"
+  1     0x00020000      0x007effff      "ROOTFS"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
         type:   data
         guid:   a4b19cee-6bd2-11e8-b662-1b9914e11155
-  3     0x007f0000      0x01d1efde      "ZPOOL"
+  2     0x007f0000      0x01d1efde      "ZPOOL"
         attrs:  0x0000000000000000
         type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
         type:   data
         guid:   ebc99d44-71fd-11e8-b490-f72d8dbd6d7e
 ```
-So, my rootfs partition starts at "0x00052000"
+So, my rootfs partition starts at "0x00020000"
 ```
-mmc write ${initrd_loadaddr} 0x00052000 0x1D0800
+mmc write ${initrd_loadaddr} 0x00020000 0xF9800
 ```
 
 ### Install a Root filesystem from a DD image on your TFTP server from a running Linux OS

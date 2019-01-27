@@ -23,15 +23,10 @@ we might put u-boot binaries and kernels on and a second that will be our root
 filesystem.
 ```
 (parted) mklabel msdos
-(parted) mkpart
-Partition type?  primary/extended? p                                      
-File system type?  [ext2]? fat16                                          
-Start? 2048s                                                              
-End? 100M
 (parted) mkpart                                                           
 Partition type?  primary/extended? p                                      
 File system type?  [ext2]?                                                
-Start? 100M                                                               
+Start? 2048s                                                               
 End? -1s
 quit
 ```
@@ -44,8 +39,7 @@ sudo losetup -P /dev/loop101 ubuntu-18.04-1G.img
 
 Format the partitions we created
 ```
-sudo mkfs.fat -F 16 -n BOOT /dev/loop101p1
-sudo mkfs.ext4 -L ROOTFS -m 0 /dev/loop101p2
+sudo mkfs.ext4 -L ROOTFS -m 0 /dev/loop101p1
 ```
 
 TODO: F2FS or JFFS2 may be better choices for the ROOTFS as they balance writes
@@ -67,7 +61,7 @@ Nilfs2 for now.
 Mount the root filesystem partition
 ```
 sudo mkdir /mnt/target
-sudo mount /dev/loop101p2 /mnt/target
+sudo mount /dev/loop101p1 /mnt/target
 ```
 
 Extract the Ubuntu (or other) base filesystem into our root filesystem
@@ -148,6 +142,39 @@ TODO: Wifi firmware from here: https://github.com/khadas/fenix/tree/master/archi
 mkdir -p /lib/firmware/brcm/
 ```
 
+### Add the kernel to the ROOTFS (work in progress)
+```
+dkpg -i linux-image-4.20.0_4.20.0-1_arm64.deb
+```
+
+### Make the ROOTFS able to generate it's own FIT images (work in progress)
+this could be put into a script in /etc/kernel/postinst.d
+```
+apt install device-tree-compiler u-boot-tools
+```
+```
+KVER="4.20.0"
+TEMPDIR=$(mktemp -d)
+sed "s/{kver}/${KVER}/g" boot.its >${TEMPDIR}/boot.its-${KVER}
+cat initrd.img-${KVER} | gunzip >${TEMPDIR}/initrd.cpio-${KVER}
+cp /boot/dtb-${KVER}/amlogic/meson-gxl-s905x-khadas-vim.dtb ${TEMPDIR}/meson-gxl-s905x-khadas-vim-${KVER}.dtb
+
+cat /boot/vmlinuz-${KVER} | gunzip >${TEMPDIR}/Image-${KVER}
+  or
+cp /boot/vmlinuz-${KVER} ${TEMPDIR}/Image-${KVER}
+
+mkimage -f ${TEMPDIR}/boot.its-${KVER} /boot/boot.itb-${KVER}
+ln -s /boot/boot.itb-${KVER} /boot/boot.itb
+rm -fr ${TEMPDIR}
+```
+
+### Add the ZFS modules (optional)
+If you compiled ZFS modules for this kernel and packaged them into a .deb then
+```
+dpkg -i zfs-modules-4.20.0_0.8.0_arm64.deb
+```
+
+### Finish up
 
 Unmount the partitions within the image
 ```
